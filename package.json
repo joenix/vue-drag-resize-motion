@@ -1,0 +1,10 @@
+{
+  "name": "vue-drag-resize-motion",
+  "version": "0.0.20",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "closest-find": "^1.0.4",
+    "vue-drag-resize": "^1.5.4"
+  }
+}
