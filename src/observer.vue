@@ -3,7 +3,7 @@
   overflow: hidden;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 .motion--item {
   flex: 1;
@@ -11,7 +11,7 @@
 </style>
 
 <template>
-  <div id="observer" class="motion--observer">
+  <div id="observer" class="motion--observer" :style="{ ...css }">
     <div class="motion--item" :style="{ flex: `0 0 ${100 / span}%` }" v-for="(item, index) in source" :key="index" :draggable="!(item.meta || {}).disabled" ref="observer" @dragstart="e => observerDragstart(e, item, index)" @dragend="e => observerDragend(e, item)">
       <slot name="item" :item="item" />
     </div>
@@ -51,6 +51,14 @@ export default {
       type: [Number],
       default() {
         return 1;
+      },
+    },
+
+    // Css
+    css: {
+      type: [Object],
+      default() {
+        return {};
       },
     },
   },
