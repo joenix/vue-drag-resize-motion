@@ -51,6 +51,7 @@
       :snapToGrid="settings.snapToGrid"
       :parentLimitation="settings.parentLim"
       :aspectRatio="rect.axes.sync"
+      :sticks="rect.sticks"
       :isDraggable="settings.draggable"
       :isResizable="settings.resizable"
       v-on:activated="onFocusIn(index)"
