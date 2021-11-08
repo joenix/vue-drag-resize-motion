@@ -204,15 +204,21 @@ export default {
 
       // Emit Event
       if (bus.active) {
-        this.$emit('dropable', bus.active, { ...this.coordinate });
-
         // Cloner
         if (this.clone) {
           const cloner = this.clone(bus.active, { ...this.coordinate });
 
+          // Set Active as Cloner
+          if (cloner) {
+            bus.active = cloner;
+          }
+
           // Insert
           this.source.push(cloner);
         }
+
+        // As Dropable
+        this.$emit('dropable', bus.active, { ...this.coordinate });
       }
 
       // Reset Observer
