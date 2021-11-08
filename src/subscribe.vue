@@ -25,6 +25,12 @@
     transition: all 0.1s;
   }
 }
+
+.vdrAnchor {
+  :deep(.vdr-stick) {
+    display: none;
+  }
+}
 </style>
 
 <template>
@@ -34,7 +40,7 @@
 
     <vue-drag-resize
       v-for="(rect, index) in subscribeSource"
-      :class="{ vdrSmooth: settings.smooth }"
+      :class="{ vdrSmooth: settings.smooth, vdrAnchor: !settings.anchor }"
       :key="rect.id"
       :w="rect.axes.w"
       :h="rect.axes.h"
