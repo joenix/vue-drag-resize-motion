@@ -28,7 +28,8 @@
 
 .vdrAnchor {
   :deep(.vdr-stick) {
-    display: none;
+    opacity: 0.375;
+    pointer-events: none;
   }
 }
 </style>
