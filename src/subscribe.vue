@@ -131,6 +131,25 @@ export default {
         };
       },
     },
+
+    // Unit as One
+    unit: {
+      type: [Object],
+      default() {
+        return {
+          x: 1,
+          y: 1,
+        };
+      },
+    },
+
+    // Space of Vertax -- Hard Code
+    space: {
+      type: [Number, String],
+      default() {
+        return 0;
+      },
+    },
   },
 
   computed: {
@@ -182,15 +201,21 @@ export default {
         }
 
         // Get Coordinate
-        const { x, y } = offset(element, { x: e.clientX, y: e.clientY }, this.offset);
+        let { x, y } = offset(element, { x: e.clientX, y: e.clientY }, this.offset);
 
         // Get Space
-        const { w, h } = bus.active.axes || this.grid;
+        let { w, h } = bus.active.axes || this.grid;
+
+        // Set VertexSpace
+        const vertexSpace = this.space * this.unit.y;
+
+        // Reset Y
+        y = y - vertexSpace;
 
         // Set Coordinate
         this.doset({
-          x: ratio(x, this.grid.x, { min: 0, max: element.offsetWidth }) * this.grid.x,
-          y: ratio(y, this.grid.y, { min: 0, max: element.offsetHeight }) * this.grid.y,
+          x: ratio(x, this.unit.x, { min: 0, max: element.offsetWidth }) * this.unit.x,
+          y: ratio(y, this.unit.y, { min: 0, max: element.offsetHeight }) * this.unit.y,
           w,
           h,
         });
