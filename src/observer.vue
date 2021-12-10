@@ -1,9 +1,27 @@
 <style lang="less" scoped>
 .motion--observer {
-  overflow: hidden;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  & {
+    overflow: hidden;
+  }
+
+  &--title {
+    &:before {
+      content: '';
+
+      margin-right: 8px;
+      padding: 0 2px;
+      border-radius: 2px;
+      background-color: #00a6c9;
+
+      display: inline;
+    }
+  }
+
+  &--grouper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }
 .motion--item {
   flex: 1;
@@ -11,11 +29,15 @@
 </style>
 
 <template>
-  <div id="observer" class="motion--observer" :style="{ ...css }">
-    <div class="motion--item" :style="{ flex: `0 0 ${100 / span}%` }" v-for="(item, index) in source" :key="index" :draggable="!(item.meta || {}).disabled" ref="observer" @dragstart="e => observerDragstart(e, item, index)" @dragend="e => observerDragend(e, item)">
-      <slot name="item" :item="item" />
-    </div>
-  </div>
+  <visual-gui-pack id="observer" class="motion--observer" :style="{ ...css }" :namespace="keys">
+    <visual-gui-part :title="key" v-for="(collage, key) in group" :key="key">
+      <div class="motion--observer--grouper">
+        <div class="motion--item" :style="{ flex: `0 0 ${100 / span}%` }" v-for="(item, index) in collage" :key="index" :draggable="!(item.meta || {}).disabled" ref="observer" @dragstart="e => observerDragstart(e, item, index)" @dragend="e => observerDragend(e, item)">
+          <slot name="item" :item="item" />
+        </div>
+      </div>
+    </visual-gui-part>
+  </visual-gui-pack>
 </template>
 
 <script>
@@ -60,6 +82,32 @@ export default {
       default() {
         return {};
       },
+    },
+  },
+
+  computed: {
+    keys() {
+      return Object.keys(this.group);
+    },
+
+    group() {
+      // Set Keys
+      const keys = {};
+
+      // Get Keys from Source
+      this.source.forEach(item => {
+        // Get Metas
+        const { group } = item.meta;
+
+        // Set Group into Keys
+        keys[group] = keys[group] || [];
+
+        // Set Item into Group
+        keys[group].push(item);
+      });
+
+      // Exports
+      return keys;
     },
   },
 
