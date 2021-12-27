@@ -64,7 +64,9 @@
       v-on:activated="onFocusIn(index)"
       v-on:deactivated="onFocusOut(index)"
       v-on:dragging="onDraggable($event, index)"
+      v-on:dragstop="onDragStop($event, index)"
       v-on:resizing="onResizable($event, index)"
+      v-on:resizestop="onResizeStop($event, index)"
       v-on:clicked="onClicked($event, rect, index)"
     >
       <slot name="item" :item="rect" />
@@ -282,6 +284,14 @@ export default {
     },
     onResizable(rect, index) {
       Object.assign(this.source[index].axes, rect2axes(rect));
+    },
+
+    onDragStop(rect, index) {
+      this.$emit('dragstop', bus.active);
+    },
+
+    onResizeStop(rect, index) {
+      this.$emit('resizestop', bus.active);
     },
 
     onSticky(e) {
