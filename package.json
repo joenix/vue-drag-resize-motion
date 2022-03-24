@@ -5,6 +5,5 @@
   "license": "MIT",
   "dependencies": {
     "closest-find": "^1.0.4",
-    "vue-drag-resize": "^1.5.4"
   }
 }
