@@ -138,9 +138,7 @@
       :lockAspectRatio="rect.axes.sync" 
       :parent="settings.parentLim" 
       :snap="true"
-      :isConflictCheck="true"
       :snapTolerance="10"
-      @refLineParams="getRefLineParams"
       @dragstop="(left, top) => dragstop(index, left, top)"
       @dragging="(left, top) => onDraggable(rect.id, left, top)" 
       @resizing="(x, y, width, height) => onResizable(index, x, y, width, height)"
@@ -187,6 +185,8 @@ import { paint, target, px, offset, ratio, ext, rect2axes, wait } from './kit';
 
 // Use Preset
 import { bus, defaultSetting, defaultSubscribe } from './preset';
+
+import _ from 'lodash';
 
 // Component
 export default {
@@ -274,6 +274,7 @@ export default {
       // rectShow: false, //weather to show the rectangle selection
 
       sync: false,
+      clipboard: null
     }
   },
 
@@ -485,8 +486,10 @@ export default {
       return isSelected ? 'border:1px solid blue !important' : null;
     },
 
+    // 如果点击事件在选中组件内部，则是拖动，不然就清除选中状态
     mouseDown(e) {
       
+      // 多选不触发
       if(this.sync) return;
 
       // determine if it's in the components
@@ -515,6 +518,40 @@ export default {
       this.prevOffsetY = 0;
     },
 
+    copy() {
+      this.clipboard = [];
+
+      // foreach source
+      this.subscribeSource.forEach(element => {
+        // copey select or active component
+        if(element.active || element.isSelected) {
+          // reset component
+          const arr = _.cloneDeep(element);
+          arr.active = false;
+          arr.isSelected = false;
+          arr.axes.x = 0;
+          arr.axes.y = 0;
+
+          // add clipboard
+          this.clipboard.push(arr);
+        }
+      });
+    },
+
+    // 粘贴
+    plaster() {
+      if(!(this.clipboard && this.clipboard.length)) return;
+      
+      // clone
+      const target = _.cloneDeep(this.clipboard);
+
+      // get new id
+      target.map(e => e.id = new Date().getTime())
+
+      // push
+      this.source.push(...target);
+    },
+
      // 辅助线回调事件
     getRefLineParams (params) {
       const { vLine, hLine } = params;
@@ -536,15 +573,28 @@ export default {
     document.addEventListener('mousedown', this.mouseDown)
 
     document.addEventListener('keydown', (e) => {
+
+      // ~metaKey mac command  ~ctrlKey windows ctrl
+      const {metaKey, ctrlKey, keyCode} = e;
+      
       if (e.keyCode === 91) {
         this.sync = true;
       }
+      
+      // copy event
+      if((metaKey || ctrlKey) && keyCode === 67) {
+        this.copy();
+      }
+
+      // plaster event
+      if((metaKey || ctrlKey) && keyCode === 86) {
+        this.plaster();
+      }
+
     });
 
     window.addEventListener('keyup', (e) => {
-      if (e.keyCode === 91) {
-        this.sync = false;
-      }
+      this.sync = false;
     });
   },
 };
