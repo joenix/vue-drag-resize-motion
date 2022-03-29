@@ -642,7 +642,7 @@ export default {
       this.bottom = bottom;
 
       await this.snapCheck();
-      this.$emit('dragging', e, this.left, this.top);
+      this.$emit('dragging', this.left, this.top);
     },
     moveHorizontally(val) {
       const [deltaX, _] = snapToGrid(this.grid, val, this.top, this.scale);

@@ -163,7 +163,8 @@
             :style="{ top: item.position, left: item.origin, width: item.lineLength}"
        />
       <!--辅助线END-->
-
+      
+      <!-- grid -->
       <div class="motion--light" :style="lightStyle" />
       <div class="motion--grid" :style="gridStyle" />
   </div>
@@ -187,6 +188,10 @@ import { paint, target, px, offset, ratio, ext, rect2axes, wait } from './kit';
 import { bus, defaultSetting, defaultSubscribe } from './preset';
 
 import _ from 'lodash';
+
+// component status
+// active 拖拽激活事件
+// isSelected 多选选中状态
 
 // Component
 export default {
@@ -287,13 +292,14 @@ export default {
       return this.source.map(rect => ext(defaultSubscribe, rect));
     },
 
-    grid() {
-      return this.settings.grid;
-    },
+    // ! 此属性引发警告 ⚠️
+    // grid() {
+    //   return this.settings.grid;
+    // },
 
     gridStyle() {
       // Set Image & Size as Grid
-      const { image, size } = paint(this.grid);
+      const { image, size } = paint(this.settings.grid);
 
       // for Usage
       return {
@@ -335,7 +341,7 @@ export default {
         let { x, y } = offset(element, { x: e.clientX, y: e.clientY }, this.offset);
 
         // Get Space
-        let { w, h } = bus.active.axes || this.grid;
+        let { w, h } = bus.active.axes || this.settings.grid;
 
         // Set VertexSpace
         const vertexSpace = this.space * this.unit.y;
@@ -424,8 +430,8 @@ export default {
 
       const deltaX = this.deltaX(offsetX);
       const deltaY = this.deltaY(offsetY);
-      
-       // if the dragging element is not been selected,clear all selected elements
+
+       // 如果拖动对象没有被选中，则清除其他组件选中状态
       if(!this.sync && !this.draggingElement.isSelected){
         this.source.map((el) => { el.isSelected = false; });
         this.selectedItemNum=0;
@@ -483,7 +489,7 @@ export default {
     },
 
     selectStyle(isSelected) {
-      return isSelected ? 'border:1px solid blue !important' : null;
+      return isSelected ? 'border:1px solid blue !important' : '';
     },
 
     // 如果点击事件在选中组件内部，则是拖动，不然就清除选中状态
@@ -492,7 +498,7 @@ export default {
       // 多选不触发
       if(this.sync) return;
 
-      // determine if it's in the components
+      // 判断点击事件是否在组件内
       const sticky = !!closest(e.target, '.vdr', true);
     
       if(sticky) {
@@ -557,7 +563,6 @@ export default {
       const { vLine, hLine } = params;
       this.vLine = vLine
       this.hLine = hLine
-      console.log(vLine[0].display, hLine)
     }
   },
 
