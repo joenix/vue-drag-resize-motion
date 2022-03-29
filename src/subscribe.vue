@@ -575,14 +575,15 @@ export default {
       document.addEventListener('mousedown', e => this.onSticky(e));
     }
 
+    const isMac = /macintosh|mac os x/i.test(navigator.userAgent);;
+
     document.addEventListener('mousedown', this.mouseDown)
 
     document.addEventListener('keydown', (e) => {
-
       // ~metaKey mac command  ~ctrlKey windows ctrl
       const {metaKey, ctrlKey, keyCode} = e;
       
-      if (e.keyCode === 91) {
+      if (isMac && metaKey || ctrlKey) {
         this.sync = true;
       }
       
