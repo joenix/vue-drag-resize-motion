@@ -137,11 +137,10 @@
       :resizable="settings.resizable"
       :lockAspectRatio="rect.axes.sync" 
       :parent="settings.parentLim" 
-      :snap="true"
-      :snapTolerance="10"
       @dragstop="(left, top) => dragstop(index, left, top)"
       @dragging="(left, top) => onDraggable(rect.id, left, top)" 
       @resizing="(x, y, width, height) => onResizable(index, x, y, width, height)"
+      @resizestop="(x, y, width, height) => resizestop(x, y, width, height)"
       @activated="onFocusIn(index)" 
       @deactivated="onFocusOut(index)"
       @click="onClicked($event, rect, index)"
@@ -279,7 +278,7 @@ export default {
       // rectShow: false, //weather to show the rectangle selection
 
       sync: false,
-      clipboard: null
+      clipboard: null,
     }
   },
 
@@ -395,15 +394,23 @@ export default {
     },
 
     onClicked(event, rect, index) {
-      
-      if (this.sync) {
-        this.source[index].isSelected = true;
-        this.selectedItemNum++;
+      const bool = this.source[index].isSelected;
+  
+      // if component is selected;
+      if(!bool) {
+        // if is sync
+        if (this.sync) {
+          this.source[index].isSelected = true;
+          this.selectedItemNum++;
+        } else {
+          // 如果选中对象没有被选中，则清除其他组件选中状态
+          this.source.map((el) => { el.isSelected = false; });
+          this.selectedItemNum=0;
+        }
       }
       
       this.clean(this.source, index);
       this.$emit('clicked', event, rect, index);
-      
     },
 
     onFocusIn(index) {
@@ -422,21 +429,18 @@ export default {
     },
 
     onDraggable( id, left, top) {
-
       this.draggingId = id;
 
-      const offsetX = left - this.draggingElement.axes.x;
-      const offsetY = top - this.draggingElement.axes.y;
+      // 选中组件数量小于2 直接return
+      if(this.selectedItemNum < 2) return;
+
+      const {x, y} = this.draggingElement.axes
+
+      const offsetX = left - x;
+      const offsetY = top - y;
 
       const deltaX = this.deltaX(offsetX);
       const deltaY = this.deltaY(offsetY);
-
-       // 如果拖动对象没有被选中，则清除其他组件选中状态
-      if(!this.sync && !this.draggingElement.isSelected){
-        this.source.map((el) => { el.isSelected = false; });
-        this.selectedItemNum=0;
-        return;
-      };
 
       this.source.map((el) => {
         if (el.id !== id && el.isSelected === true) {
@@ -448,13 +452,15 @@ export default {
      //  Object.assign(this.source[index].axes, rect2axes(rect));
     },
 
-    dragstop(index, left, top) {      
+    dragstop(index, left, top) {
       this.draggingId = null;
       this.prevOffsetX = 0;
       this.prevOffsetY = 0;
 
       this.source[index].axes.x = left;
       this.source[index].axes.y = top;
+
+      this.$emit('dragstop', bus.active);
     },
 
     deltaX(offsetX) {
@@ -473,6 +479,10 @@ export default {
 
     onResizable(index, x, y, w, h) {
       Object.assign(this.source[index].axes, {x, y, w, h});
+    },
+
+    resizestop(x, y, width, height) {
+      this.$emit('resizestop', bus.active);
     },
 
     onSticky(e) {
