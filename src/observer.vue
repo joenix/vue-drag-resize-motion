@@ -83,6 +83,14 @@ export default {
         return {};
       },
     },
+
+    // drage change
+    change: {
+      type: [Function],
+      default() {
+        return {}
+      }
+    }
   },
 
   computed: {
@@ -114,6 +122,8 @@ export default {
   methods: {
     observerDragstart(e, item, index) {
       bus.active = item;
+      
+      this.change(item, index)
     },
 
     observerDragend(e, item) {
