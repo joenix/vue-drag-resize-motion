@@ -7,6 +7,7 @@
 .motion--grid {
   width: 100%;
   height: 100%;
+  cursor: auto;
 }
 
 .motion--light {
@@ -75,6 +76,19 @@
   left: 0
 }
 
+.select-box-dashed {
+  position: absolute;
+  width: 0px;
+  height: 0px;
+  padding: 0px;
+  margin: 0px;
+  border: 1px dashed #0099ff;
+  z-index:9999;
+  background-color: #c3d5ed;
+  opacity: 0.5;
+  filter: alpha(opacity=50);
+  font-size: 0px;
+}
 </style>
 
 <style>
@@ -117,38 +131,43 @@
 
 <template>
   <div id="subscribe" class="motion--subscribe" @drop="subscribeDrop" @dragover="observerDragover" @dragleave="subscribeLeave">
-    <vue-draggable-resizable
-      :style="selectStyle(rect.isSelected)"
-      v-for="(rect, index) in subscribeSource"
-      classNameHandle="vdr-stick"
-      :class="{ vdrSmooth: settings.smooth, vdrAnchor: !settings.anchor }"
-      :key="rect.id"
-      :w="rect.axes.w"
-      :h="rect.axes.h"
-      :x="rect.axes.x"
-      :y="rect.axes.y"
-      :minHeight="rect.axes.minH" 
-      :minWidth="rect.axes.minW"
-      :grid="[settings.grid.x, settings.grid.y]"
-      :z-index="rect.zIndex"
-      :axis="settings.axis"
-      :active="settings.active && rect.active"
-      :draggable="settings.draggable"
-      :resizable="settings.resizable"
-      :lockAspectRatio="rect.axes.sync" 
-      :parent="settings.parentLim" 
-      @dragstop="(left, top) => dragstop(index, left, top)"
-      @dragging="(left, top) => onDraggable(rect.id, left, top)" 
-      @resizing="(x, y, width, height) => onResizable(index, x, y, width, height)"
-      @resizestop="(x, y, width, height) => resizestop(x, y, width, height)"
-      @activated="onFocusIn(index)" 
-      @deactivated="onFocusOut(index)"
-      @click="onClicked($event, rect, index)"
-    >
-      <slot name="item" :item="rect" />
-    </vue-draggable-resizable>
+    <!-- grid -->
+    <div class="motion--grid" 
+      @mousedown="mouseDown"
+      @mouseup="mouseUpfn"
+      @mousemove="mouseMove" :style="gridStyle">
+      <vue-draggable-resizable
+        :style="selectStyle(rect.isSelected)"
+        v-for="(rect, index) in subscribeSource"
+        classNameHandle="vdr-stick"
+        :class="{ vdrSmooth: settings.smooth, vdrAnchor: !settings.anchor }"
+        :key="rect.id"
+        :w="rect.axes.w"
+        :h="rect.axes.h"
+        :x="rect.axes.x"
+        :y="rect.axes.y"
+        :minHeight="rect.axes.minH" 
+        :minWidth="rect.axes.minW"
+        :grid="[settings.grid.x, settings.grid.y]"
+        :z-index="rect.zIndex"
+        :axis="settings.axis"
+        :active="settings.active && rect.active"
+        :draggable="settings.draggable"
+        :resizable="settings.resizable"
+        :lockAspectRatio="rect.axes.sync" 
+        :parent="settings.parentLim" 
+        @dragstop="(left, top) => dragstop(index, left, top)"
+        @dragging="(left, top) => onDraggable(rect.id, left, top)" 
+        @resizing="(x, y, width, height) => onResizable(index, x, y, width, height)"
+        @resizestop="(x, y, width, height) => resizestop(x, y, width, height)"
+        @activated="onFocusIn(index)" 
+        @deactivated="onFocusOut(index)"
+        @click="onClicked($event, rect, index)"
+      >
+        <slot name="item" :item="rect" />
+      </vue-draggable-resizable>
 
-     <!--辅助线-->
+      <!--辅助线-->
       <span class="ref-line v-line"
             v-for="item in vLine"
             :key="item"
@@ -163,9 +182,15 @@
        />
       <!--辅助线END-->
       
-      <!-- grid -->
+      <!--frame selection-->
+      <div
+        :style="{width: rectWidth + 'px',height:rectHeight + 'px',left:rectX+'px',top:rectY+'px'}"
+        v-show="rectShow"
+        class="select-box-dashed"> </div>
+      
+      <!-- light -->
       <div class="motion--light" :style="lightStyle" />
-      <div class="motion--grid" :style="gridStyle" />
+      </div>
   </div>
 </template>
 
@@ -265,17 +290,18 @@ export default {
       hLine: [],
       //frame selection
       selectedItemNum: 0,
-      // startX: 0, //X of the mouse (begin to move)
-      // startY: 0,
-      // initX: 0, //X of the mouse (moving)
-      // initY: 0,
-      // scrollX: 0,
-      // scrollY: 0,
-      // rectX: 0, //X of the rectangle selection
-      // rectY: 0,
-      // rectWidth: 0, //width of the rectangle selection
-      // rectHeight: 0,
-      // rectShow: false, //weather to show the rectangle selection
+
+      startX: 0, //X of the mouse (begin to move)
+      startY: 0,
+      initX: 0, //X of the mouse (moving)
+      initY: 0,
+      scrollX: 0,
+      scrollY: 0,
+      rectX: 0, //X of the rectangle selection
+      rectY: 0,
+      rectWidth: 0, //width of the rectangle selection
+      rectHeight: 0,
+      rectShow: false, //weather to show the rectangle selection
 
       sync: false,
       clipboard: null,
@@ -394,22 +420,7 @@ export default {
     },
 
     onClicked(event, rect, index) {
-      const bool = this.source[index].isSelected;
-  
-      // if component is selected;
-      if(!bool) {
-        // if is sync
-        if (this.sync) {
-          this.source[index].isSelected = true;
-          this.selectedItemNum++;
-        } else {
-          // 如果选中对象没有被选中，则清除其他组件选中状态
-          this.source.map((el) => { el.isSelected = false; });
-          this.selectedItemNum=0;
-        }
-      }
-      
-      this.clean(this.source, index);
+      // this.clean(this.source, index);
       this.$emit('clicked', event, rect, index);
     },
 
@@ -430,6 +441,13 @@ export default {
 
     onDraggable( id, left, top) {
       this.draggingId = id;
+
+      // if the dragging element is not been selected,clear all selected elements
+      if(this.draggingElement.isSelected===false){
+        this.source.map((el) => { el.isSelected = false; });
+        this.selectedItemNum=0;
+        return;
+      };
 
       // 选中组件数量小于2 直接return
       if(this.selectedItemNum < 2) return;
@@ -494,7 +512,7 @@ export default {
 
       // Clean
       if (!this.sticky) {
-        this.clean(this.source);
+        this.clean();
       }
     },
 
@@ -502,36 +520,75 @@ export default {
       return isSelected ? 'border:1px solid blue !important' : '';
     },
 
-    // 如果点击事件在选中组件内部，则是拖动，不然就清除选中状态
     mouseDown(e) {
+      if (e.target.className !== 'motion--grid') {
+        return;
+      }
       
-      // 多选不触发
-      if(this.sync) return;
-
-      // 判断点击事件是否在组件内
-      const sticky = !!closest(e.target, '.vdr', true);
-    
-      if(sticky) {
-        // if sync is true and draggingElement is not null
-        if(!this.sync && this.draggingElement && !this.draggingElement.isSelected){
-          this.source.map((el) => { el.isSelected = false; });
-          this.selectedItemNum=0;
-        };
-        return
-      };
-
       //clear all selected elements
       if (this.selectedItemNum > 0) {
         this.source.map((el) => { el.isSelected = false; });
         this.selectedItemNum=0;
         return;
       }
+      this.rectSelect = true;//begin to draw the rectangle
+      this.rectWidth =0;
+      this.rectHeight=0;
+      this.startX = e.offsetX;
+      this.startY = e.offsetY;
+      this.scrollX = e.clientX - e.offsetX;
+      this.scrollY = e.clientY - e.offsetY;
 
-      this.clean(this.source);
+      this.clearBubble(e);
+    },
 
-      this.draggingId = null;
-      this.prevOffsetX = 0;
-      this.prevOffsetY = 0;
+    mouseMove(e) {
+      if (!this.rectSelect) {
+        return;
+      }
+      this.rectShow = true;
+      this.initX = e.clientX - this.scrollX;
+      this.initY = e.clientY - this.scrollY;
+      this.rectX = Math.min(this.initX, this.startX);
+      this.rectY = Math.min(this.initY, this.startY);
+      this.rectWidth = Math.abs(this.initX - this.startX);
+      this.rectHeight = Math.abs(this.initY - this.startY);
+      this.clearBubble(e);
+    },
+
+    mouseUpfn(e) {
+      if (this.rectSelect) {
+        if (this.rectWidth > 10 && this.rectHeight > 10) {
+          this.source.map((el)=>{
+            const {x, y, w, h} = el.axes;
+            const elLeft=x;
+            const elRight=x+w;
+            const elTop=y;
+            const elBottom=y+h;
+            console.log('this.rectY', this.rectX, this.rectY, this.rectWidth)
+            if (elLeft > this.rectX && elTop > this.rectY && (elRight < (this.rectX + this.rectWidth)) && (elBottom < (this.rectY + this.rectHeight))) {
+              el.isSelected = true;
+              this.selectedItemNum+=1;
+            }
+          });
+        }
+        this.rectShow = false;
+        this.rectSelect = false;
+        this.clearBubble(e);
+      }
+    },
+
+    clearBubble(e) {
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      } else {
+        e.cancelBubble = true;
+      }
+      if (e.preventDefault) {
+        e.preventDefault();
+      } else {
+        e.returnValue = false;
+      }
     },
 
     copy() {
@@ -573,11 +630,7 @@ export default {
       const { vLine, hLine } = params;
       this.vLine = vLine
       this.hLine = hLine
-    }
-  },
-
-  beforeDestroy() {
-    document.removeEventListener('mousedown', this.mouseDown)
+    },    
   },
 
   mounted() {
@@ -585,17 +638,9 @@ export default {
       document.addEventListener('mousedown', e => this.onSticky(e));
     }
 
-    const isMac = /macintosh|mac os x/i.test(navigator.userAgent);;
-
-    document.addEventListener('mousedown', this.mouseDown)
-
     document.addEventListener('keydown', (e) => {
       // ~metaKey mac command  ~ctrlKey windows ctrl
       const {metaKey, ctrlKey, keyCode} = e;
-      
-      if (isMac && metaKey || ctrlKey) {
-        this.sync = true;
-      }
       
       // copy event
       if((metaKey || ctrlKey) && keyCode === 67) {
@@ -609,9 +654,6 @@ export default {
 
     });
 
-    window.addEventListener('keyup', (e) => {
-      this.sync = false;
-    });
   },
 };
 </script>
