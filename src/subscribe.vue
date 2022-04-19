@@ -135,7 +135,8 @@
     <div class="motion--grid" 
       @mousedown="mouseDown"
       @mouseup="mouseUpfn"
-      @mousemove="mouseMove" :style="gridStyle">
+      @mousemove="mouseMove" 
+      :style="gridStyle">
       <vue-draggable-resizable
         :style="selectStyle(rect.isSelected)"
         v-for="(rect, index) in subscribeSource"
@@ -151,7 +152,7 @@
         :grid="[settings.grid.x, settings.grid.y]"
         :z-index="rect.zIndex"
         :axis="settings.axis"
-        :active="settings.active && rect.active"
+        :active="rect.active"
         :draggable="settings.draggable"
         :resizable="settings.resizable"
         :lockAspectRatio="rect.axes.sync" 
@@ -408,7 +409,7 @@ export default {
           }
 
           // Insert
-          this.source.push(cloner);
+          this.source.unshift(cloner);
         }
 
         // As Dropable
@@ -420,22 +421,16 @@ export default {
     },
 
     onClicked(event, rect, index) {
-      // this.clean(this.source, index);
       this.$emit('clicked', event, rect, index);
     },
 
     onFocusIn(index) {
+      this.source[index].active = true;
       this.$emit('focusIn', this.source[index]);
     },
 
     onFocusOut(index) {
-      wait(0).then(() => {
-        if (this.sticky) {
-          return;
-        }
-        this.clean(this.source, index, true);
-      });
-
+      this.source[index].active = false;
       this.$emit('focusOut', this.source[index]);
     },
 
@@ -560,18 +555,21 @@ export default {
       if (this.rectSelect) {
         if (this.rectWidth > 10 && this.rectHeight > 10) {
           this.source.map((el)=>{
+
             const {x, y, w, h} = el.axes;
+
             const elLeft=x;
             const elRight=x+w;
             const elTop=y;
             const elBottom=y+h;
-            console.log('this.rectY', this.rectX, this.rectY, this.rectWidth)
+
             if (elLeft > this.rectX && elTop > this.rectY && (elRight < (this.rectX + this.rectWidth)) && (elBottom < (this.rectY + this.rectHeight))) {
               el.isSelected = true;
               this.selectedItemNum+=1;
             }
           });
         }
+
         this.rectShow = false;
         this.rectSelect = false;
         this.clearBubble(e);
