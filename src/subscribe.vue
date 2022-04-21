@@ -163,7 +163,7 @@
         @resizestop="(x, y, width, height) => resizestop(x, y, width, height)"
         @activated="onFocusIn(index)" 
         @deactivated="onFocusOut(index)"
-        @click="onClicked($event, rect, index)"
+        @click="onClicked(index)"
       >
         <slot name="item" :item="rect" />
       </vue-draggable-resizable>
@@ -191,7 +191,7 @@
       
       <!-- light -->
       <div class="motion--light" :style="lightStyle" />
-      </div>
+    </div>
   </div>
 </template>
 
@@ -420,17 +420,17 @@ export default {
       this.reset();
     },
 
-    onClicked(event, rect, index) {
-      this.$emit('clicked', event, rect, index);
+    onClicked(index) {
+      this.$emit('clicked', this.source[index], index);
     },
 
     onFocusIn(index) {
-      this.source[index].active = true;
+      // this.source[index].active = true;
       this.$emit('focusIn', this.source[index]);
     },
 
     onFocusOut(index) {
-      this.source[index].active = false;
+     //  this.source[index].active = false;
       this.$emit('focusOut', this.source[index]);
     },
 
