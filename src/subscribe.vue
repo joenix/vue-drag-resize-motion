@@ -421,16 +421,38 @@ export default {
     },
 
     onClicked(index) {
+      // actived
+      this.source[index].active = true;
+
+      // select status
+      const bool = this.source[index].isSelected;
+  
+      // if component is selected;
+      if(!bool) {
+        // if is sync
+        if (this.sync) {
+          this.source[index].isSelected = true;
+          this.selectedItemNum++;
+        } else {
+          // 如果选中对象没有被选中，则清除其他组件选中状态
+          this.source.map((el) => { el.isSelected = false; });
+          this.selectedItemNum=0;
+        }
+      }
+      
       this.$emit('clicked', this.source[index], index);
     },
 
     onFocusIn(index) {
+      // onclicker add
       // this.source[index].active = true;
       this.$emit('focusIn', this.source[index]);
     },
 
     onFocusOut(index) {
-     //  this.source[index].active = false;
+      // remove component active status
+      this.source[index].active = false;
+
       this.$emit('focusOut', this.source[index]);
     },
 
@@ -454,7 +476,8 @@ export default {
 
       const deltaX = this.deltaX(offsetX);
       const deltaY = this.deltaY(offsetY);
-
+      
+      // move
       this.source.map((el) => {
         if (el.id !== id && el.isSelected === true) {
           el.axes.x += deltaX;
@@ -592,7 +615,7 @@ export default {
     copy() {
       this.clipboard = [];
 
-      // foreach source
+      // loop source
       this.subscribeSource.forEach(element => {
         // copey select or active component
         if(element.active || element.isSelected) {
@@ -636,10 +659,16 @@ export default {
       document.addEventListener('mousedown', e => this.onSticky(e));
     }
 
+    const isMac = /macintosh|mac os x/i.test(navigator.userAgent);
+
     document.addEventListener('keydown', (e) => {
-      // ~metaKey mac command  ~ctrlKey windows ctrl
+      // ~metaKey mac command  ~ctrlKey windows ctrl  67 c  86 v
       const {metaKey, ctrlKey, keyCode} = e;
       
+      if (isMac && metaKey || ctrlKey) {
+        this.sync = true;
+      }
+
       // copy event
       if((metaKey || ctrlKey) && keyCode === 67) {
         this.copy();
@@ -650,6 +679,10 @@ export default {
         this.plaster();
       }
 
+    });
+
+    window.addEventListener('keyup', (e) => {
+      this.sync = false;
     });
 
   },
