@@ -147,10 +147,10 @@
         :h="rect.axes.h"
         :x="rect.axes.x"
         :y="rect.axes.y"
+        :z="rect.zIndex"
         :minHeight="rect.axes.minH" 
         :minWidth="rect.axes.minW"
         :grid="[settings.grid.x, settings.grid.y]"
-        :z-index="rect.zIndex"
         :axis="settings.axis"
         :active="rect.active"
         :draggable="settings.draggable"
@@ -402,6 +402,10 @@ export default {
         // Cloner
         if (this.clone) {
           const cloner = this.clone(bus.active, { ...this.coordinate });
+
+          cloner.zIndex = this.subscribeSource.length;
+
+          console.log('cc', cloner)
 
           // Set Active as Cloner
           if (cloner) {
