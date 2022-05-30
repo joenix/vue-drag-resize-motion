@@ -30,10 +30,10 @@
 
 <template>
   <visual-gui-pack id="observer" class="motion--observer" :style="{ ...css }" :namespace="keys">
-    <visual-gui-part :title="key" v-for="(collage, key) in group" :key="key">
+    <visual-gui-part :title="key" v-for="(collage, key, idx) in group" :key="key">
       <div class="motion--observer--grouper">
         <div class="motion--item" :style="{ flex: `0 0 ${100 / span}%` }" v-for="(item, index) in collage" :key="index" :draggable="!(item.meta || {}).disabled" ref="observer" @dragstart="e => observerDragstart(e, item, index)" @dragend="e => observerDragend(e, item)">
-          <slot name="item" :item="item" />
+          <slot name="item" :item="item" :index="idx" />
         </div>
       </div>
     </visual-gui-part>
