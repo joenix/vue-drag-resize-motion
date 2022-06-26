@@ -289,7 +289,6 @@ export default {
     onDragStop(rect, index) {
       this.$emit('dragstop', bus.active);
     },
-
     onResizeStop(rect, index) {
       this.$emit('resizestop', bus.active);
     },
