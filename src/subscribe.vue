@@ -1,6 +1,6 @@
 <style lang="less" scoped>
 .motion--subscribe {
-  overflow: hidden;
+  // overflow: hidden;
   position: relative;
 }
 
@@ -23,7 +23,7 @@
 .vdrSmooth {
   &,
   & > .content-container {
-    transition: all 0.1s;
+    // transition: all 0.1s; // 导致多组件拖动抖动的罪魁祸首
   }
 }
 
@@ -147,7 +147,7 @@
         :h="rect.axes.h"
         :x="rect.axes.x"
         :y="rect.axes.y"
-        :z="rect.zIndex"
+        :z="index"
         :minHeight="rect.axes.minH" 
         :minWidth="rect.axes.minW"
         :grid="[settings.grid.x, settings.grid.y]"
@@ -155,7 +155,7 @@
         :active="rect.active"
         :draggable="settings.draggable"
         :resizable="settings.resizable"
-        :lockAspectRatio="rect.axes.sync" 
+        :lockAspectRatio="rect.axes.sync"
         :parent="settings.parentLim" 
         @dragstop="(left, top) => dragstop(index, left, top)"
         @dragging="(left, top) => onDraggable(rect.id, left, top)" 
@@ -189,8 +189,8 @@
         v-show="rectShow"
         class="select-box-dashed"> </div>
       
-      <!-- light -->
-      <div class="motion--light" :style="lightStyle" />
+      <!-- light dont need its--> 
+      <!-- <div class="motion--light" :style="lightStyle" /> -->
     </div>
   </div>
 </template>
@@ -318,11 +318,6 @@ export default {
       return this.source.map(rect => ext(defaultSubscribe, rect));
     },
 
-    // ! 此属性引发警告 ⚠️
-    // grid() {
-    //   return this.settings.grid;
-    // },
-
     gridStyle() {
       // Set Image & Size as Grid
       const { image, size } = paint(this.settings.grid);
@@ -331,15 +326,6 @@ export default {
       return {
         backgroundImage: this.settings.snapToGrid ? image : 'none',
         backgroundSize: size,
-      };
-    },
-
-    lightStyle() {
-      return {
-        width: px(this.coordinate.w),
-        height: px(this.coordinate.h),
-        transform: `translate(${px(this.coordinate.x)}, ${px(this.coordinate.y)})`,
-        transition: this.settings.smooth ? `all 0.12s` : 'none',
       };
     },
 
@@ -405,8 +391,6 @@ export default {
 
           cloner.zIndex = this.subscribeSource.length;
 
-          console.log('cc', cloner)
-
           // Set Active as Cloner
           if (cloner) {
             bus.active = cloner;
@@ -437,10 +421,12 @@ export default {
         if (this.sync) {
           this.source[index].isSelected = true;
           this.selectedItemNum++;
+          this.setSelectedCount(this.setSelectedCount)
         } else {
           // 如果选中对象没有被选中，则清除其他组件选中状态
           this.source.map((el) => { el.isSelected = false; });
           this.selectedItemNum=0;
+          this.setSelectedCount(0)
         }
       }
       
@@ -454,9 +440,6 @@ export default {
     },
 
     onFocusOut(index) {
-      // remove component active status
-      this.source[index].active = false;
-
       this.$emit('focusOut', this.source[index]);
     },
 
@@ -467,6 +450,7 @@ export default {
       if(this.draggingElement.isSelected===false){
         this.source.map((el) => { el.isSelected = false; });
         this.selectedItemNum=0;
+        this.setSelectedCount(0)
         return;
       };
 
@@ -489,7 +473,6 @@ export default {
         }
         return el;
       });
-     //  Object.assign(this.source[index].axes, rect2axes(rect));
     },
 
     dragstop(index, left, top) {
@@ -551,6 +534,7 @@ export default {
       if (this.selectedItemNum > 0) {
         this.source.map((el) => { el.isSelected = false; });
         this.selectedItemNum=0;
+        this.setSelectedCount(0)
         return;
       }
       this.rectSelect = true;//begin to draw the rectangle
@@ -595,6 +579,8 @@ export default {
               this.selectedItemNum+=1;
             }
           });
+
+          this.setSelectedCount(this.selectedItemNum)
         }
 
         this.rectShow = false;
@@ -655,17 +641,19 @@ export default {
       const { vLine, hLine } = params;
       this.vLine = vLine
       this.hLine = hLine
-    },    
-  },
+    },
 
-  mounted() {
-    if (!bus.sticky) {
-      document.addEventListener('mousedown', e => this.onSticky(e));
-    }
+    /**
+     * @function 设置选择组件数量
+     * @param {*}  
+     */
+    setSelectedCount(count) {
+      this.$emit('selectedCount', count)
+    },
 
-    const isMac = /macintosh|mac os x/i.test(navigator.userAgent);
+    keyDown(e) {
+      const isMac = /macintosh|mac os x/i.test(navigator.userAgent);
 
-    document.addEventListener('keydown', (e) => {
       // ~metaKey mac command  ~ctrlKey windows ctrl  67 c  86 v
       const {metaKey, ctrlKey, keyCode} = e;
       
@@ -682,13 +670,28 @@ export default {
       if((metaKey || ctrlKey) && keyCode === 86) {
         this.plaster();
       }
+    },
 
-    });
-
-    window.addEventListener('keyup', (e) => {
+    keyup(e) {
       this.sync = false;
-    });
-
+    },
   },
+
+  mounted() {
+    if (!bus.sticky) {
+      document.addEventListener('mousedown', this.onSticky);
+    }
+
+
+    document.addEventListener('keydown', this.keyDown);
+
+    window.addEventListener('keyup', this.keyup);
+  },
+
+  beforeUnmount() {
+    document.removeEventListener('keydown', this.keyDown)
+    document.removeEventListener('keyup', this.keyup)
+    document.removeEventListener('mousedown', this.onSticky)
+  }
 };
 </script>
